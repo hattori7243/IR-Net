@@ -126,7 +126,7 @@ def Log_UP(K_min, K_max, epoch, total_epoch):
 lr = 0.007
 momentum = 0.9
 weight_decay = 1e-4
-total_epochs = 10
+total_epochs = 500
 
 best_acc = 0
 
@@ -137,9 +137,9 @@ lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer, total_epochs, eta_min=0, last_epoch=-1)
 
 T_min, T_max = 1e-1, 1
-epochs1 = 3
-epochs2 = 2
-epochs3 = 5
+epochs1 = 100
+epochs2 = 200
+epochs3 = 200
 
 assert(total_epochs == epochs1+epochs2+epochs3)
 
@@ -215,6 +215,6 @@ for i in range(epochs1+epochs2, total_epochs):
     t = test(model)
     if t > best_acc:
         best_acc = t
-        #torch.save(model.state_dict(), './model/best_modify_1000.ckpt')
+        torch.save(model.state_dict(), './model/incre_kt.ckpt')
     print('best_acc=', best_acc)
     lr_scheduler.step()
