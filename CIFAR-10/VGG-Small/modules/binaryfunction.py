@@ -23,7 +23,7 @@ class my8BitQuantize(Function):
     def forward(ctx, input):
         ctx.save_for_backward(input)
         out = torch.zeros(input.shape).cuda()
-        for i in range(0, out.shape[2], 8):
+        for i in range(0, out.shape[3], 8):
             out[:, :, :, i] = 128*input[:, :, :, i]
             out[:, :, :, i+1] = 64*input[:, :, :, i+1]
             out[:, :, :, i+2] = 32*input[:, :, :, i+2]
@@ -31,7 +31,7 @@ class my8BitQuantize(Function):
             out[:, :, :, i+4] = 8*input[:, :, :, i+4]
             out[:, :, :, i+5] = 4*input[:, :, :, i+5]
             out[:, :, :, i+6] = 2*input[:, :, :, i+6]
-            #out[:, :, :, i+7] = input[:, :, :, i+7]
+            out[:, :, :, i+7] = input[:, :, :, i+7]
         return out
 
     @staticmethod
@@ -48,20 +48,4 @@ class my8BitQuantize(Function):
             grad_input[:, :, :, i+6] = 2*grad_output[:, :, :, i+6]
             grad_input[:, :, :, i+7] = grad_output[:, :, :, i+7]
         grad_input = torch.clamp(grad_input, -1, +1)
-        return grad_input, None, None
-
-
-class BinaryQuantize_modify(Function):
-    @staticmethod
-    def forward(ctx, input, k, t):
-        ctx.save_for_backward(input, k, t)
-        out = k*torch.tanh(input * t)
-        #out = torch.sign(input)
-        return out
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        input, k, t = ctx.saved_tensors
-        grad_input = k * t * \
-            (1 - torch.pow(torch.tanh(input * t), 2)) * grad_output
         return grad_input, None, None

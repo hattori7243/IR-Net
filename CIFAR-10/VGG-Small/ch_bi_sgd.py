@@ -163,9 +163,9 @@ class VGG_SMALL_bi_1W1A(nn.Module):
         super(VGG_SMALL_bi_1W1A, self).__init__()
 
         self.ch_bi = change_to_bi()
-        self.conv0 = ir_1w1a.my_Conv2d(3, 128, kernel_size=(
-            3, 24), padding=(1, 8), stride=(1, 8), bias=False)
-        # self.conv0 = ir_1w1a.my_Conv2d(3, 128, kernel_size=(1,8), stride=(1,8),bias=False)
+        #self.conv0 = ir_1w1a.my_Conv2d(3, 128, kernel_size=(
+        #    3, 24), padding=(1, 8), stride=(1, 8), bias=False)
+        self.conv0 = ir_1w1a.my_Conv2d(3, 128, kernel_size=(1,8), stride=(1,8),bias=False)
 
         # self.hold_to_bi = hold_to_bi(32, 32, inplanes=3, expansion=3)
         # self.conv0 = ir_1w1a.IRConv2d(
@@ -264,9 +264,9 @@ epochs = 1000
 best_acc = 0
 
 criterion = nn.CrossEntropyLoss()
-# optimizer = optim.SGD(model.parameters(), lr=lr,
-#                       momentum = momentum, weight_decay = weight_decay)
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+optimizer = optim.SGD(model.parameters(), lr=lr,
+                       momentum = momentum, weight_decay = weight_decay)
+#optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer, epochs, eta_min=0, last_epoch=-1)
 
@@ -303,6 +303,6 @@ for i in range(epochs):
     t = test(model)
     if t > best_acc:
         best_acc = t
-        torch.save(model.state_dict(), './bi_model/best2.ckpt')
+        torch.save(model.state_dict(), './model/ch_bi_best_sgd.ckpt')
     print('best_acc=', best_acc)
     lr_scheduler.step()
