@@ -17,7 +17,7 @@ class BinaryQuantize(Function):
             (1 - torch.pow(torch.tanh(input * t), 2)) * grad_output
         return grad_input, None, None
 
-
+'''
 class my8BitQuantize(Function):
     @staticmethod
     def forward(ctx, input):
@@ -49,3 +49,4 @@ class my8BitQuantize(Function):
             grad_input[:, :, :, i+7] = grad_output[:, :, :, i+7]
         grad_input = torch.clamp(grad_input, -1, +1)
         return grad_input, None, None
+'''
