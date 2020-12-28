@@ -13,18 +13,11 @@ import math
 import os
 
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-print('Calculate with ', device)
-
 # Hyper parameters
 momentum = 0.9
 weight_decay = 1e-4
 batch_size = 256
 
-
-criterion = nn.CrossEntropyLoss()
-#optimizer = torch.optim.Adam(net.parameters(), lr=lr)
-#optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
 best_acc = 0
 
@@ -74,7 +67,7 @@ def train(net, epoch=0):
     correct = 0
     total = 0
     for batch_idx, (inputs, targets) in enumerate(trainloader):
-        inputs, targets = inputs.to(device), targets.to(device)
+        inputs, targets = inputs.cuda(), targets.cuda()
         optimizer.zero_grad()
         outputs = net(inputs)
         loss = criterion(outputs, targets)
@@ -100,7 +93,7 @@ def test(net):
     total = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(testloader):
-            inputs, targets = inputs.to(device), targets.to(device)
+            inputs, targets = inputs.cuda(), targets.cuda()
             outputs = net(inputs)
             loss = criterion(outputs, targets)
 
@@ -189,7 +182,7 @@ class VGG_SMALL_1W1A_normal(nn.Module):
         return x
 
 
-model = VGG_SMALL_1W1A_normal().to(device)
+model = VGG_SMALL_1W1A_normal().cuda()
 T_min, T_max = 1e-1, 1e1
 lr = 0.007
 epochs = 1000
