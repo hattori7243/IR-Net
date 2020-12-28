@@ -9,9 +9,13 @@ import torchvision
 import torchvision.transforms as transforms
 import time
 import math
+import sys
 
 import os
 
+print(len(sys.argv))
+for item in sys.argv:
+    print(str(item),'----')
 
 # Hyper parameters
 momentum = 0.9
@@ -227,6 +231,5 @@ for i in range(epochs):
     if t > best_acc:
         best_acc = t
     print('best_acc=', best_acc)
-    # if(t > 89.0):
-    #    torch.save(model.state_dict(), './model/sgd_'+str(t)+'.ckpt')
+    torch.save(model.state_dict(),str(sys.argv[1])+str(i)+'.ckpt')
     lr_scheduler.step()
