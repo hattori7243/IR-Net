@@ -128,7 +128,20 @@ def Log_UP(K_min, K_max, epoch):
     return torch.tensor([math.pow(10, Kmin + (Kmax - Kmin) / epochs * epoch)]).float().cuda()
 
 
+
 bast_acc = 0
+
+conv1_weight_now=0
+conv1_same_list=[]
+conv2_weight_now=0
+conv2_same_list=[]
+conv3_weight_now=0
+conv3_same_list=[]
+conv4_weight_now=0
+conv4_same_list=[]
+conv5_weight_now=0
+conv5_same_list=[]
+acc_list=[]
 
 for i in range(epochs):
     print('*'*128)
@@ -153,9 +166,116 @@ for i in range(epochs):
     print('current lr {:.5e}'.format(optimizer.param_groups[0]['lr']))
     train(model, i)
     t = test(model)
+
+    acc_list.append(t)
+
     if t > best_acc:
         best_acc = t
+        torch.save(model.state_dict(), './model/delta_best.ckpt')
     print('best_acc=', best_acc)
-    # if(t > 89.0):
-    #    torch.save(model.state_dict(), './model/sgd_'+str(t)+'.ckpt')
     lr_scheduler.step()
+
+    conv1_weight_pre=conv1_weight_now
+    conv1_weight_now=model.conv1.bi_weight().cpu().detach().numpy().ravel()
+    conv1_weight_product=conv1_weight_pre*conv1_weight_now
+    conv1_same=0
+    conv1_diff=0
+    conv1_total=0
+    for item in conv1_weight_product:
+        if(item==1.0):
+            conv1_same+=1
+        else:
+            conv1_diff+=1
+        conv1_total+=1
+    assert(conv1_same+conv1_diff==conv1_total)
+    print('\n->conv1: total para={}, same={}%\n'.format(conv1_total,conv1_same/conv1_total*100))
+    conv1_same_list.append(conv1_same/conv1_total*100)
+
+    conv2_weight_pre=conv2_weight_now
+    conv2_weight_now=model.conv2.bi_weight().cpu().detach().numpy().ravel()
+    conv2_weight_product=conv2_weight_pre*conv2_weight_now
+    conv2_same=0
+    conv2_diff=0
+    conv2_total=0
+    for item in conv2_weight_product:
+        if(item==1.0):
+            conv2_same+=1
+        else:
+            conv2_diff+=1
+        conv2_total+=1
+    assert(conv2_same+conv2_diff==conv2_total)
+    print('\n->conv2: total para={}, same={}%\n'.format(conv2_total,conv2_same/conv2_total*100))
+    conv2_same_list.append(conv2_same/conv2_total*100)
+
+    conv3_weight_pre=conv3_weight_now
+    conv3_weight_now=model.conv3.bi_weight().cpu().detach().numpy().ravel()
+    conv3_weight_product=conv3_weight_pre*conv3_weight_now
+    conv3_same=0
+    conv3_diff=0
+    conv3_total=0
+    for item in conv3_weight_product:
+        if(item==1.0):
+            conv3_same+=1
+        else:
+            conv3_diff+=1
+        conv3_total+=1
+    assert(conv3_same+conv3_diff==conv3_total)
+    print('\n->conv3: total para={}, same={}%\n'.format(conv3_total,conv3_same/conv3_total*100))
+    conv3_same_list.append(conv3_same/conv3_total*100)
+
+    conv4_weight_pre=conv4_weight_now
+    conv4_weight_now=model.conv4.bi_weight().cpu().detach().numpy().ravel()
+    conv4_weight_product=conv4_weight_pre*conv4_weight_now
+    conv4_same=0
+    conv4_diff=0
+    conv4_total=0
+    for item in conv4_weight_product:
+        if(item==1.0):
+            conv4_same+=1
+        else:
+            conv4_diff+=1
+        conv4_total+=1
+    assert(conv4_same+conv4_diff==conv4_total)
+    print('\n->conv4: total para={}, same={}%\n'.format(conv4_total,conv4_same/conv4_total*100))
+    conv4_same_list.append(conv4_same/conv4_total*100)
+
+    conv5_weight_pre=conv5_weight_now
+    conv5_weight_now=model.conv5.bi_weight().cpu().detach().numpy().ravel()
+    conv5_weight_product=conv5_weight_pre*conv5_weight_now
+    conv5_same=0
+    conv5_diff=0
+    conv5_total=0
+    for item in conv5_weight_product:
+        if(item==1.0):
+            conv5_same+=1
+        else:
+            conv5_diff+=1
+        conv5_total+=1
+    assert(conv5_same+conv5_diff==conv5_total)
+    print('\n->conv5: total para={}, same={}%\n'.format(conv5_total,conv5_same/conv5_total*100))
+    conv5_same_list.append(conv5_same/conv5_total*100)
+
+    with open('./same/conv1.out','w') as f:
+        for item in conv1_same_list:
+            f.write(str(item))
+            f.write(',')
+    with open('./same/conv2.out','w') as f:
+        for item in conv2_same_list:
+            f.write(str(item))
+            f.write(',')
+    with open('./same/conv3.out','w') as f:
+        for item in conv3_same_list:
+            f.write(str(item))
+            f.write(',')
+    with open('./same/conv4.out','w') as f:
+        for item in conv4_same_list:
+            f.write(str(item))
+            f.write(',')
+    with open('./same/conv5.out','w') as f:
+        for item in conv5_same_list:
+            f.write(str(item))
+            f.write(',')
+    with open('./same/acc.out','w') as f:
+        for item in acc_list:
+            f.write(str(item))
+            f.write(',')
