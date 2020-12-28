@@ -29,6 +29,7 @@ class IRConv2d(nn.Conv2d):
                           self.stride, self.padding,
                           self.dilation, self.groups)
         return output
+
     def bi_weight(self):
         w = self.weight
         bw = w - w.view(w.size(0), -1).mean(-1).view(w.size(0), 1, 1, 1)
@@ -39,30 +40,32 @@ class IRConv2d(nn.Conv2d):
         return bw
 
 
-class my_Conv2d(nn.Conv2d):
+class Nomal_conv2d(nn.Conv2d):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True):
-        super(my_Conv2d, self).__init__(in_channels, out_channels,
-                                        kernel_size, stride, padding, dilation, groups, bias)
-        self.kernel_size=kernel_size
-        self.k = torch.tensor([10]).float().cuda()
-        self.t = torch.tensor([0.1]).float().cuda()
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, quan=False):
+        super(Nomal_conv2d, self).__init__(in_channels, out_channels,
+                                           kernel_size, stride, padding, dilation, groups, bias)
+        self.quan = quan
 
     def forward(self, input):
         w = self.weight
         a = input
-        bw = w - w.view(w.size(0), -1).mean(-1).view(w.size(0), 1, 1, 1)
-        bw = bw / bw.view(bw.size(0), -1).std(-1).view(bw.size(0), 1, 1, 1)
 
-        bw = binaryfunction.BinaryQuantize().apply(bw, self.k, self.t)
+        # 将权重从min,max映射到-1，1
+        nw = 2*(w - (w.max()+w.min())/2)/(w.max()-w.min())
 
-        if(self.padding):
-            a = F.pad(a, (self.padding[1], self.padding[1],
-                          self.padding[0], self.padding[0]), 'constant', -1)
-        a = binaryfunction.my8BitQuantize().apply(a)
-        output = F.conv2d(a, bw, self.bias,
-                          self.stride, 0,
+        if self.quan == True:
+            nw = binaryfunction.Quantize8bit.apply(nw)
+
+        output = F.conv2d(a, nw, self.bias,
+                          self.stride, self.padding,
                           self.dilation, self.groups)
-        output += (self.kernel_size[0]*(torch.pow(torch.tensor([2]), torch.tensor([8]))-1)).cuda()
-        output = output/2
         return output
+
+    def return_true_weight(self):
+        w = self.weight
+        nw = 2*(w - (w.max()+w.min())/2)/(w.max()-w.min())
+        print(nw)
+        if self.quan == True:
+            nw = binaryfunction.Quantize8bit.apply(nw)
+        return nw
