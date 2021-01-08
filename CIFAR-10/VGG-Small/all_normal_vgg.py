@@ -11,12 +11,14 @@ import time
 import math
 import sys
 import my_model
-
 import os
+import argparse
 
-print(len(sys.argv))
-for item in sys.argv:
-    print(str(item),'----')
+parser=argparse.ArgumentParser()
+parser.add_argument('-quan_bit',default=8,type=int,help="the bits that use for quantize,default=8")
+parser.add_argument('-save_dir',default=None,type=str,help="the directory to store model,default not store")
+
+args=parser.parse_args()
 
 # Hyper parameters
 momentum = 0.9
@@ -110,8 +112,13 @@ def test(net):
               format(test_loss, 100. * correct / total, correct, total))
     return 100. * correct / total
 
+if args.save_dir:
+    if not(os.path.exists(args.save_dir)):
+        os.mkdir(args.save_dir)
+        print('mkdir',args.save_dir)
 
-model = my_model.VGG_SMALL_allnormal().cuda()
+
+model = my_model.VGG_SMALL_allnormal(q_bit=args.quan_bit).cuda()
 
 lr = 0.007
 epochs = 1000
@@ -133,6 +140,6 @@ for i in range(epochs):
     if t > best_acc:
         best_acc = t
     print('best_acc=', best_acc)
-    if len(sys.argv)>1:
-        torch.save(model.state_dict(),str(sys.argv[1])+str(i)+'.ckpt')
+    if args.save_dir:
+        torch.save(model.state_dict(),args.save_dir+str(i)+'.ckpt')
     lr_scheduler.step()

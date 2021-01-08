@@ -1,6 +1,7 @@
 from torch.autograd import Function
 import torch
 import torch.nn as nn
+import math
 
 
 class BinaryQuantize(Function):
@@ -18,13 +19,14 @@ class BinaryQuantize(Function):
         return grad_input, None, None
 
 
-class Quantize8bit(Function):
+class QuantizeNbit(Function):
     @staticmethod
-    def forward(ctx, input):
+    def forward(ctx, input,quan_bit=8):
         ctx.save_for_backward(input)
-        out = 127*input
+        num = math.pow(2,quan_bit)-1
+        out = num*input
         torch.round_(out)
-        out = out / 127
+        out = out / num
         return out
 
     @staticmethod

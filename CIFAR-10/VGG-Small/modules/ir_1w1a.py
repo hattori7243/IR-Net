@@ -30,7 +30,7 @@ class IRConv2d(nn.Conv2d):
                           self.dilation, self.groups)
         return output
 
-    def bi_weight(self):
+    def true_weight(self):
         w = self.weight
         bw = w - w.view(w.size(0), -1).mean(-1).view(w.size(0), 1, 1, 1)
         bw = bw / bw.view(bw.size(0), -1).std(-1).view(bw.size(0), 1, 1, 1)
@@ -42,10 +42,11 @@ class IRConv2d(nn.Conv2d):
 
 class Nomal_conv2d(nn.Conv2d):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, quan=False):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, quan=False,quan_bit=8):
         super(Nomal_conv2d, self).__init__(in_channels, out_channels,
                                            kernel_size, stride, padding, dilation, groups, bias)
         self.quan = quan
+        self.quan_bit=quan_bit
 
     def forward(self, input):
         w = self.weight
@@ -59,7 +60,7 @@ class Nomal_conv2d(nn.Conv2d):
         nw = nw /( (w.view(w.size(0), -1).max(-1)[0].view(w.size(0), 1, 1, 1))-
                 (w.view(w.size(0), -1).min(-1)[0].view(w.size(0), 1, 1, 1)))
         if self.quan == True:
-            nw = binaryfunction.Quantize8bit.apply(nw)
+            nw = binaryfunction.QuantizeNbit.apply(nw,self.quan_bit)
 
         output = F.conv2d(a, nw, self.bias,
                           self.stride, self.padding,
@@ -76,14 +77,15 @@ class Nomal_conv2d(nn.Conv2d):
                 (w.view(w.size(0), -1).min(-1)[0].view(w.size(0), 1, 1, 1)))
         #print(nw)
         if self.quan == True:
-            nw = binaryfunction.Quantize8bit.apply(nw)
+            nw = binaryfunction.QuantizeNbit.apply(nw,self.quan_bit)
         return nw
 
 
 class Nomal_linear(nn.Linear):
-    def __init__(self, in_channels, out_channels, bias=True,quan=True):
+    def __init__(self, in_channels, out_channels, bias=True,quan=True,quan_bit=8):
         super(Nomal_linear, self).__init__(in_channels,out_channels,bias)
         self.quan=quan
+        self.quan_bit=quan_bit
 
     def forward(self,input):
         w = self.weight
@@ -96,8 +98,8 @@ class Nomal_linear(nn.Linear):
             nw_bias=2*(w_bias - (w_bias.max()+w_bias.min())/2)/(w_bias.max()-w_bias.min())
 
         if self.quan == True:
-            nw=binaryfunction.Quantize8bit.apply(nw)
-            nw_bias=binaryfunction.Quantize8bit.apply(nw_bias)
+            nw=binaryfunction.QuantizeNbit.apply(nw,self.quan_bit)
+            nw_bias=binaryfunction.QuantizeNbit.apply(nw_bias,self.quan_bit)
         
         output=F.linear(input,nw,nw_bias)
         return output
@@ -113,6 +115,6 @@ class Nomal_linear(nn.Linear):
             nw_bias=2*(w_bias - (w_bias.max()+w_bias.min())/2)/(w_bias.max()-w_bias.min())
 
         if self.quan == True:
-            nw=binaryfunction.Quantize8bit.apply(nw)
-            nw_bias=binaryfunction.Quantize8bit.apply(nw_bias)
+            nw=binaryfunction.QuantizeNbit.apply(nw,self.quan_bit)
+            nw_bias=binaryfunction.QuantizeNbit.apply(nw_bias,self.quan_bit)
         return nw,nw_bias

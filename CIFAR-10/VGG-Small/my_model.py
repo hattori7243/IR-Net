@@ -1,5 +1,6 @@
 from modules.ir_1w1a import Nomal_conv2d
 from modules.ir_1w1a import Nomal_linear
+from modules.ir_1w1a import IRConv2d
 from modules import ir_1w1a
 import torch
 import torch.nn as nn
@@ -12,25 +13,25 @@ class VGG_SMALL_1W1A_normal(nn.Module):
 
     def __init__(self, num_classes=10):
         super(VGG_SMALL_1W1A_normal, self).__init__()
-        self.conv0 = Nomal_conv2d(3, 128, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv0 = Nomal_conv2d(3, 128, kernel_size=3, padding=1, bias=False)
         self.bn0 = nn.BatchNorm2d(128)
-        self.conv1 = Nomal_conv2d(
-            128, 128, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv1 = IRConv2d(
+            128, 128, kernel_size=3, padding=1, bias=False)
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
         # self.nonlinear = nn.ReLU(inplace=True)
         self.nonlinear = nn.Hardtanh(inplace=True)
-        self.conv2 = Nomal_conv2d(
-            128, 256, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv2 = IRConv2d(
+            128, 256, kernel_size=3, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(256)
-        self.conv3 = Nomal_conv2d(
-            256, 256, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv3 = IRConv2d(
+            256, 256, kernel_size=3, padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(256)
-        self.conv4 = Nomal_conv2d(
-            256, 512, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv4 = IRConv2d(
+            256, 512, kernel_size=3, padding=1, bias=False)
         self.bn4 = nn.BatchNorm2d(512)
-        self.conv5 = Nomal_conv2d(
-            512, 512, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv5 = IRConv2d(
+            512, 512, kernel_size=3, padding=1, bias=False)
         self.bn5 = nn.BatchNorm2d(512)
         self.fc = Nomal_linear(512*4*4, num_classes)
         #self.fc = nn.Linear(512*4*4, num_classes)
@@ -94,27 +95,27 @@ class VGG_SMALL_1W1A_normal(nn.Module):
 
 # 每一层卷积层都归一化+8bit量化
 class VGG_SMALL_allnormal(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, num_classes=10,q_bit=8):
         super(VGG_SMALL_allnormal, self).__init__()
-        self.conv0 = Nomal_conv2d(3, 128, kernel_size=3, padding=1, bias=False,quan=True)
+        self.conv0 = Nomal_conv2d(3, 128, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
         self.bn0 = nn.BatchNorm2d(128)
         self.conv1 = Nomal_conv2d(
-            128, 128, kernel_size=3, padding=1, bias=False,quan=True)
+            128, 128, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
         # self.nonlinear = nn.ReLU(inplace=True)
         self.nonlinear = nn.Hardtanh(inplace=True)
         self.conv2 = Nomal_conv2d(
-            128, 256, kernel_size=3, padding=1, bias=False,quan=True)
+            128, 256, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
         self.bn2 = nn.BatchNorm2d(256)
         self.conv3 = Nomal_conv2d(
-            256, 256, kernel_size=3, padding=1, bias=False,quan=True)
+            256, 256, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
         self.bn3 = nn.BatchNorm2d(256)
         self.conv4 = Nomal_conv2d(
-            256, 512, kernel_size=3, padding=1, bias=False,quan=True)
+            256, 512, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
         self.bn4 = nn.BatchNorm2d(512)
         self.conv5 = Nomal_conv2d(
-            512, 512, kernel_size=3, padding=1, bias=False,quan=True)
+            512, 512, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
         self.bn5 = nn.BatchNorm2d(512)
         self.fc = nn.Linear(512*4*4, num_classes)
         self._initialize_weights()
@@ -254,7 +255,9 @@ class VGG_SMALL_fullbit(nn.Module):
 
 
 
+
 if __name__ == "__main__":
+
     model1=VGG_SMALL_1W1A_normal().cuda()
     model2=VGG_SMALL_fullbit().cuda()
     model3=VGG_SMALL_allnormal().cuda()
