@@ -1,5 +1,3 @@
-from modules.ir_1w1a import Nomal_conv2d
-from modules import ir_1w1a
 from vgg import VGG_SMALL_1W1A
 import torch
 import torch.nn as nn
@@ -9,16 +7,10 @@ import torchvision
 import torchvision.transforms as transforms
 import time
 import math
-import sys
-import my_model
+
 import os
 
-import argparse
 
-parser=argparse.ArgumentParser()
-parser.add_argument('-save_dir',default=None,type=str,help="the directory to store model,default not store")
-
-args=parser.parse_args()
 
 # Hyper parameters
 momentum = 0.9
@@ -113,12 +105,7 @@ def test(net):
     return 100. * correct / total
 
 
-# if args.save_dir:
-#     if not(os.path.exists(args.save_dir)):
-#         os.mkdir(args.save_dir)
-#         print('mkdir',args.save_dir)
-
-model = my_model.VGG_SMALL_fullbit().cuda()
+model = VGG_SMALL_1W1A().cuda()
 T_min, T_max = 1e-1, 1e1
 lr = 0.007
 epochs = 1000
@@ -129,16 +116,38 @@ lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer, epochs, eta_min=0, last_epoch=-1)
 
 
+def Log_UP(K_min, K_max, epoch):
+    Kmin, Kmax = math.log(
+        K_min) / math.log(10), math.log(K_max) / math.log(10)
+    return torch.tensor([math.pow(10, Kmin + (Kmax - Kmin) / epochs * epoch)]).float().cuda()
 
 
 for i in range(epochs):
     print('*'*128)
+    t = Log_UP(T_min, T_max, i)
+    if (t < 1):
+        k = 1 / t
+    else:
+        k = torch.tensor([1]).float().cuda()
+    print('k=', k.item(), ', t=', t.item())
 
+    model.conv1.k = k
+    model.conv2.k = k
+    model.conv3.k = k
+    model.conv4.k = k
+    model.conv5.k = k
+
+    model.conv1.t = t
+    model.conv2.t = t
+    model.conv3.t = t
+    model.conv4.t = t
+    model.conv5.t = t
     print('current lr {:.5e}'.format(optimizer.param_groups[0]['lr']))
     train(model, i)
     t = test(model)
     if t > best_acc:
         best_acc = t
     print('best_acc=', best_acc)
-    torch.save(model.state_dict(),args.save_dir+'best.ckpt')
+    # if(t > 89.0):
+    #    torch.save(model.state_dict(), './model/sgd_'+str(t)+'.ckpt')
     lr_scheduler.step()

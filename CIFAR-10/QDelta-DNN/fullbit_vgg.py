@@ -1,4 +1,3 @@
-from modules.ir_1w1a import Nomal_conv2d
 from modules import ir_1w1a
 from vgg import VGG_SMALL_1W1A
 import torch
@@ -15,10 +14,11 @@ import os
 
 import argparse
 
-parser=argparse.ArgumentParser()
-parser.add_argument('-save_dir',default=None,type=str,help="the directory to store model,default not store")
+parser = argparse.ArgumentParser()
+parser.add_argument('-save_dir', default=None, type=str,
+                    help="the directory to store model,default not store")
 
-args=parser.parse_args()
+args = parser.parse_args()
 
 # Hyper parameters
 momentum = 0.9
@@ -113,10 +113,10 @@ def test(net):
     return 100. * correct / total
 
 
-# if args.save_dir:
-#     if not(os.path.exists(args.save_dir)):
-#         os.mkdir(args.save_dir)
-#         print('mkdir',args.save_dir)
+if args.save_dir:
+    if not(os.path.exists(args.save_dir)):
+        os.mkdir(args.save_dir)
+        print('mkdir', args.save_dir)
 
 model = my_model.VGG_SMALL_fullbit().cuda()
 T_min, T_max = 1e-1, 1e1
@@ -129,8 +129,6 @@ lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer, epochs, eta_min=0, last_epoch=-1)
 
 
-
-
 for i in range(epochs):
     print('*'*128)
 
@@ -140,5 +138,5 @@ for i in range(epochs):
     if t > best_acc:
         best_acc = t
     print('best_acc=', best_acc)
-    torch.save(model.state_dict(),args.save_dir+'best.ckpt')
+    torch.save(model.state_dict(), args.save_dir+'best.ckpt')
     lr_scheduler.step()

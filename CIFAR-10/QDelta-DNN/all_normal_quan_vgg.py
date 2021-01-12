@@ -1,6 +1,3 @@
-from modules.ir_1w1a import Nomal_conv2d
-from modules import ir_1w1a
-from vgg import VGG_SMALL_1W1A
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,13 +9,15 @@ import math
 import sys
 import my_model
 import os
-
 import argparse
 
-parser=argparse.ArgumentParser()
-parser.add_argument('-save_dir',default=None,type=str,help="the directory to store model,default not store")
+parser = argparse.ArgumentParser()
+parser.add_argument('-quan_bit', default=8, type=int,
+                    help="the bits that use for quantize,default=8")
+parser.add_argument('-save_dir', default=None, type=str,
+                    help="the directory to store model,default not store")
 
-args=parser.parse_args()
+args = parser.parse_args()
 
 # Hyper parameters
 momentum = 0.9
@@ -86,7 +85,7 @@ def train(net, epoch=0):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
         print('-', end='')
-    print('\nTrain: Loss: {:.3f} | Acc: {:.3f}%% ({}/{})'.
+    print('\nTrain: Loss: {:.3f} | Acc: {:.3f}% ({}/{})'.
           format(train_loss, 100. * correct / total, correct, total))
     return 100. * correct / total
 
@@ -108,37 +107,38 @@ def test(net):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-        print('Test: Loss: {:.3f} | Acc: {:.3f}%% ({}/{})'.
+        print('Test: Loss: {:.3f} | Acc: {:.3f}% ({}/{})'.
               format(test_loss, 100. * correct / total, correct, total))
     return 100. * correct / total
 
 
-# if args.save_dir:
-#     if not(os.path.exists(args.save_dir)):
-#         os.mkdir(args.save_dir)
-#         print('mkdir',args.save_dir)
+if args.save_dir:
+    if not(os.path.exists(args.save_dir)):
+        os.mkdir(args.save_dir)
+        print('mkdir', args.save_dir)
 
-model = my_model.VGG_SMALL_fullbit().cuda()
-T_min, T_max = 1e-1, 1e1
+
+model = my_model.VGG_SMALL_allnormal(q_bit=args.quan_bit).cuda()
+
 lr = 0.007
 epochs = 1000
 criterion = nn.CrossEntropyLoss()
+
 optimizer = optim.SGD(model.parameters(), lr=lr,
                       momentum=momentum, weight_decay=weight_decay)
+
 lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer, epochs, eta_min=0, last_epoch=-1)
 
 
-
-
 for i in range(epochs):
     print('*'*128)
-
     print('current lr {:.5e}'.format(optimizer.param_groups[0]['lr']))
     train(model, i)
     t = test(model)
     if t > best_acc:
         best_acc = t
     print('best_acc=', best_acc)
-    torch.save(model.state_dict(),args.save_dir+'best.ckpt')
+    if args.save_dir:
+        torch.save(model.state_dict(), args.save_dir+str(i)+'.ckpt')
     lr_scheduler.step()

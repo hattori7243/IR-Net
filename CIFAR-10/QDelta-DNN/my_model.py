@@ -1,7 +1,7 @@
-from modules.ir_1w1a import Nomal_conv2d
-from modules.ir_1w1a import Nomal_linear
-from modules.ir_1w1a import Quan_conv2d
-from modules.ir_1w1a import Quan_linear
+from modules.Normal_Quan_module import Normal_conv2d
+from modules.Normal_Quan_module import Normal_linear
+from modules.Normal_Quan_module import Quan_conv2d
+from modules.Normal_Quan_module import Quan_linear
 from modules.ir_1w1a import IRConv2d
 from modules import ir_1w1a
 import torch
@@ -15,7 +15,8 @@ class VGG_SMALL_1W1A_normal(nn.Module):
 
     def __init__(self, num_classes=10):
         super(VGG_SMALL_1W1A_normal, self).__init__()
-        self.conv0 = Nomal_conv2d(3, 128, kernel_size=3, padding=1, bias=False)
+        self.conv0 = Normal_conv2d(
+            3, 128, kernel_size=3, padding=1, bias=False)
         self.bn0 = nn.BatchNorm2d(128)
         self.conv1 = IRConv2d(
             128, 128, kernel_size=3, padding=1, bias=False)
@@ -35,13 +36,13 @@ class VGG_SMALL_1W1A_normal(nn.Module):
         self.conv5 = IRConv2d(
             512, 512, kernel_size=3, padding=1, bias=False)
         self.bn5 = nn.BatchNorm2d(512)
-        self.fc = Nomal_linear(512*4*4, num_classes)
+        self.fc = Normal_linear(512*4*4, num_classes)
         #self.fc = nn.Linear(512*4*4, num_classes)
         self._initialize_weights()
 
     def _initialize_weights(self):
         for m in self.modules():
-            if isinstance(m, Nomal_conv2d):
+            if isinstance(m, Normal_conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
                 if m.bias is not None:
@@ -54,7 +55,7 @@ class VGG_SMALL_1W1A_normal(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-            elif isinstance(m, Nomal_linear):
+            elif isinstance(m, Normal_linear):
                 n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
@@ -86,36 +87,38 @@ class VGG_SMALL_1W1A_normal(nn.Module):
         x = self.fc(x)
         return x
 
+
 # 每一层卷积层都归一化+8bit量化
 class VGG_SMALL_allnormal(nn.Module):
-    def __init__(self, num_classes=10,q_bit=8):
+    def __init__(self, num_classes=10, q_bit=8):
         super(VGG_SMALL_allnormal, self).__init__()
-        self.conv0 = Nomal_conv2d(3, 128, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+        self.conv0 = Normal_conv2d(
+            3, 128, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn0 = nn.BatchNorm2d(128)
-        self.conv1 = Nomal_conv2d(
-            128, 128, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+        self.conv1 = Normal_conv2d(
+            128, 128, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
         # self.nonlinear = nn.ReLU(inplace=True)
         self.nonlinear = nn.Hardtanh(inplace=True)
-        self.conv2 = Nomal_conv2d(
-            128, 256, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+        self.conv2 = Normal_conv2d(
+            128, 256, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn2 = nn.BatchNorm2d(256)
-        self.conv3 = Nomal_conv2d(
-            256, 256, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+        self.conv3 = Normal_conv2d(
+            256, 256, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn3 = nn.BatchNorm2d(256)
-        self.conv4 = Nomal_conv2d(
-            256, 512, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+        self.conv4 = Normal_conv2d(
+            256, 512, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn4 = nn.BatchNorm2d(512)
-        self.conv5 = Nomal_conv2d(
-            512, 512, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+        self.conv5 = Normal_conv2d(
+            512, 512, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn5 = nn.BatchNorm2d(512)
-        self.fc = Nomal_linear(512*4*4, num_classes)
+        self.fc = Normal_linear(512*4*4, num_classes)
         self._initialize_weights()
 
     def _initialize_weights(self):
         for m in self.modules():
-            if isinstance(m, Nomal_conv2d):
+            if isinstance(m, Normal_conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
                 if m.bias is not None:
@@ -123,7 +126,7 @@ class VGG_SMALL_allnormal(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-            elif isinstance(m, Nomal_linear):
+            elif isinstance(m, Normal_linear):
                 n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
@@ -155,29 +158,31 @@ class VGG_SMALL_allnormal(nn.Module):
         x = self.fc(x)
         return x
 
+
 # 每一层卷积层都8bit量化,量化参数以第一个版本的为准
-class VGG_SMALL_quan_without_nomal(nn.Module):
-    def __init__(self, num_classes=10,q_bit=8):
-        super(VGG_SMALL_quan_without_nomal, self).__init__()
-        self.conv0 = Quan_conv2d(3, 128, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+class VGG_SMALL_quan_without_normal(nn.Module):
+    def __init__(self, num_classes=10, q_bit=8):
+        super(VGG_SMALL_quan_without_normal, self).__init__()
+        self.conv0 = Quan_conv2d(
+            3, 128, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn0 = nn.BatchNorm2d(128)
         self.conv1 = Quan_conv2d(
-            128, 128, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+            128, 128, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
         # self.nonlinear = nn.ReLU(inplace=True)
         self.nonlinear = nn.Hardtanh(inplace=True)
         self.conv2 = Quan_conv2d(
-            128, 256, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+            128, 256, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn2 = nn.BatchNorm2d(256)
         self.conv3 = Quan_conv2d(
-            256, 256, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+            256, 256, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn3 = nn.BatchNorm2d(256)
         self.conv4 = Quan_conv2d(
-            256, 512, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+            256, 512, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn4 = nn.BatchNorm2d(512)
         self.conv5 = Quan_conv2d(
-            512, 512, kernel_size=3, padding=1, bias=False,quan=True,quan_bit=q_bit)
+            512, 512, kernel_size=3, padding=1, bias=False, quan=True, quan_bit=q_bit)
         self.bn5 = nn.BatchNorm2d(512)
         self.fc = Quan_linear(512*4*4, num_classes)
         self._initialize_weights()
@@ -197,6 +202,14 @@ class VGG_SMALL_quan_without_nomal(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+    def cal_sq(self):
+        self.conv0.cal_sq()
+        self.conv1.cal_sq()
+        self.conv2.cal_sq()
+        self.conv3.cal_sq()
+        self.conv4.cal_sq()
+        self.conv5.cal_sq()
+        self.fc.cal_sq()
 
     def forward(self, x):
         x = self.conv0(x)
@@ -224,7 +237,6 @@ class VGG_SMALL_quan_without_nomal(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
-
 
 
 # 全精度模型
@@ -254,7 +266,7 @@ class VGG_SMALL_fullbit(nn.Module):
             512, 512, kernel_size=3, padding=1, bias=False)
         self.bn5 = nn.BatchNorm2d(512)
         #self.fc = nn.Linear(512*4*4, num_classes)
-        self.fc=nn.Linear(512*4*4,num_classes)
+        self.fc = nn.Linear(512*4*4, num_classes)
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -300,11 +312,9 @@ class VGG_SMALL_fullbit(nn.Module):
         return x
 
 
-
-
 if __name__ == "__main__":
 
-    model1=VGG_SMALL_1W1A_normal().cuda()
-    model2=VGG_SMALL_fullbit().cuda()
-    model3=VGG_SMALL_allnormal().cuda()
-    model4=VGG_SMALL_quan_without_nomal().cuda()
+    model1 = VGG_SMALL_1W1A_normal().cuda()
+    model2 = VGG_SMALL_fullbit().cuda()
+    model3 = VGG_SMALL_allnormal().cuda()
+    model4 = VGG_SMALL_quan_without_normal().cuda()
